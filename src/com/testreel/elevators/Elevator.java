@@ -63,7 +63,6 @@ public class Elevator implements Runnable {
                 }
 
                 int nextStop = upRequests.first();
-                //FloorCall call = calledFloors.get(0);
                 System.out.println(color + "getnextstop " + nextStop);
                 controlSystem.removeStop(nextStop, "up");
                 upRequests.notifyAll();
@@ -91,25 +90,6 @@ public class Elevator implements Runnable {
             return -1;
         }
     }
-
-//    public FloorCall getNextStop() throws InterruptedException {
-//        List<FloorCall> calledFloors = controlSystem.getCalledFloors();
-//        Set<Integer> upRequests = controlSystem.getUpRequests();
-//        Set<Integer> downRequests = controlSystem.getDownRequests();
-//
-//        synchronized (calledFloors) {
-//            while (calledFloors.isEmpty()) {
-//                System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
-//                calledFloors.wait();
-//                //return null;
-//            }
-//            FloorCall call = calledFloors.get(0);
-//            System.out.println(color + "getnextstop " + call.getFloorNumber());
-//            controlSystem.removeFloorCall(call);
-//            calledFloors.notifyAll();
-//            return call;
-//        }
-//    }
 
     public void stop() {
         System.out.println(color + "Elevator " + this.elevatorNumber + " stopping on floor " + this.currentFloor);
