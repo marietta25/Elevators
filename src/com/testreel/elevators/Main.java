@@ -42,10 +42,9 @@ public class Main {
         t.sleep(5000);
         makeFloorCall(4, 0);
 
-        for (int i = 0; i < controlSystem.getCalledFloors().size(); i++) {
-            System.out.println(controlSystem.getCalledFloors().get(i).getFloorNumber());
-            System.out.println(controlSystem.getCalledFloors().get(i).getDirection());
-        }
+
+        System.out.println("down req " + controlSystem.getDownRequests());
+        System.out.println("up req " +controlSystem.getUpRequests());
 
 
 
@@ -54,18 +53,15 @@ public class Main {
         System.out.println(building.getFloors().get(1).isDownButtonPressed());
         System.out.println(building.getFloors().get(2).isUpButtonPressed());
 
-
-        System.out.println(building.getElevators().get(0).getThread());
-        System.out.println(building.getElevators().get(1).getThread());
-        System.out.println(building.getElevators().get(2).getThread());
     }
 
     public static void makeFloorCall(int floor, int direction) {
-        controlSystem.addFloorCall(floor, direction);
+        FloorCall newCall = controlSystem.makeFloorCall(floor, direction);
+        controlSystem.addFloorCall(newCall);
     }
 
-    public static void makeFloorCall(FloorCall call) {
-        controlSystem.addFloorCall(call);
-    }
+//    public static void makeFloorCall(FloorCall call) {
+//        controlSystem.addFloorCall(call);
+//    }
 
 }

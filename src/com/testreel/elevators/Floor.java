@@ -1,17 +1,20 @@
 package com.testreel.elevators;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 public class Floor {
 
     private int floorNumber;
     private boolean upButtonPressed;
     private boolean downButtonPressed;
-    private FloorCall floorCall;
+    private Set<Integer> floorCalls; // for keeping track of calls to go up and down - max 1 up and 1 down per floor
 
     public Floor(int floorNumber) {
         this.floorNumber = floorNumber;
         this.upButtonPressed = false;
         this.downButtonPressed = false;
-        this.floorCall = null;
+        this.floorCalls = new TreeSet<>();
     }
 
     public FloorCall callToGoUp() {
@@ -24,8 +27,9 @@ public class Floor {
             return null;
         }
         this.upButtonPressed = true;
-        this.floorCall = new FloorCall(this.floorNumber, 1);
-        return this.floorCall;
+        FloorCall up = new FloorCall(this.floorNumber, 1);
+        this.floorCalls.add(up.getDirection());
+        return up;
     }
 
     public FloorCall callToGoDown() {
@@ -38,8 +42,9 @@ public class Floor {
             return null;
         }
         this.downButtonPressed = true;
-        this.floorCall = new FloorCall(this.floorNumber, 0);
-        return this.floorCall;
+        FloorCall down = new FloorCall(this.floorNumber, 0);
+        this.floorCalls.add(down.getDirection());
+        return down;
     }
 
     public int getFloorNumber() {
