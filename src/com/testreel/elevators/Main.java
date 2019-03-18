@@ -12,11 +12,7 @@ public class Main {
         t.setName("Main thread");
 
         building.generateFloors();
-        //building.generateElevators();
-
-        building.getElevators().add(0, new Elevator(1, 1, controlSystem, TheadColor.ANSI_BLUE));
-        building.getElevators().add(1, new Elevator(2, 1, controlSystem, TheadColor.ANSI_GREEN));
-        building.getElevators().add(2, new Elevator(3, 1, controlSystem, TheadColor.ANSI_PURPLE));
+        building.generateElevators();
 
 
         // start elevators
