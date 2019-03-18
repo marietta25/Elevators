@@ -58,35 +58,37 @@ public class ControlSystem {
         return false;
     }
 
-    public synchronized boolean addFloorCall(int floorNumber, int direction) {
+    public boolean addFloorCall(int floorNumber, int direction) {
         Floor calledFrom = this.floors.get(floorNumber-1);
         FloorCall returned;
 
-        System.out.println("Calling from " + calledFrom.getFloorNumber());
-        if (direction == 1) {
-            returned = calledFrom.callToGoUp();
-        } else if (direction == 0) {
-            returned = calledFrom.callToGoDown();
-        } else {
-            System.out.println("Invalid direction - 1 to go up, 0 to go down");
+        synchronized (this.calledFloors) {
+            System.out.println("Calling from " + calledFrom.getFloorNumber());
+            if (direction == 1) {
+                returned = calledFrom.callToGoUp();
+            } else if (direction == 0) {
+                returned = calledFrom.callToGoDown();
+            } else {
+                System.out.println("Invalid direction - 1 to go up, 0 to go down");
+                return false;
+            }
+
+            if (returned != null) {
+                for (int i = 0; i < this.calledFloors.size(); i++) {
+                    FloorCall current = this.calledFloors.get(i);
+                    if ((current.getFloorNumber() == returned.getFloorNumber()) && (current.getDirection() == returned.getDirection())) {
+                        System.out.println("A call is already made from this floor");
+                        return false;
+                    }
+                }
+                this.calledFloors.add(returned);
+                this.calledFloors.notifyAll();
+                System.out.println("Added floor call from " + returned.getFloorNumber() + " to list");
+
+                return true;
+            }
             return false;
         }
-
-        if (returned != null) {
-            for (int i = 0; i < this.calledFloors.size(); i++) {
-                FloorCall current = this.calledFloors.get(i);
-                if ((current.getFloorNumber() == returned.getFloorNumber()) && (current.getDirection() == returned.getDirection())) {
-                    System.out.println("A call is already made from this floor");
-                    return false;
-                }
-            }
-            this.calledFloors.add(returned);
-            notifyAll();
-            System.out.println("Added floor call from " + returned.getFloorNumber() +" to list");
-
-            return true;
-        }
-        return false;
     }
 
     public List<Elevator> getElevators() {

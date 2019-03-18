@@ -39,6 +39,9 @@ public class Main {
         t.sleep(10000);
         makeFloorCall(7, 1);
 
+        t.sleep(5000);
+        makeFloorCall(4, 0);
+
         for (int i = 0; i < controlSystem.getCalledFloors().size(); i++) {
             System.out.println(controlSystem.getCalledFloors().get(i).getFloorNumber());
             System.out.println(controlSystem.getCalledFloors().get(i).getDirection());

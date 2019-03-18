@@ -48,16 +48,19 @@ public class Elevator implements Runnable {
         return true;
     }
 
-    public FloorCall getNextStop() {
+    public FloorCall getNextStop() throws InterruptedException {
         List<FloorCall> calledFloors = controlSystem.getCalledFloors();
 
         synchronized (calledFloors) {
-            if (calledFloors.size() == 0) {
-                return null;
+            while (calledFloors.isEmpty()) {
+                System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
+                calledFloors.wait();
+                //return null;
             }
             FloorCall call = calledFloors.get(0);
             System.out.println(color + "getnextstop " + call.getFloorNumber());
             controlSystem.removeFloorCall(call);
+            calledFloors.notifyAll();
             return call;
         }
     }
@@ -150,23 +153,13 @@ public class Elevator implements Runnable {
                 return;
             }
 
-            FloorCall nextStop = getNextStop();
-
-            if (nextStop == null) {
-                System.out.println(color + "No floor requests at the moment");
-                synchronized (this) {
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } else {
-                //controlSystem.sendElevator(nextStop);
+            try {
+                FloorCall nextStop = getNextStop();
                 System.out.println(color + "Elevator " + elevatorNumber + " is servicing next request to floor " + nextStop.getFloorNumber());
                 move(nextStop);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
         }
     }
 }
