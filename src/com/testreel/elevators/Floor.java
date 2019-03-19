@@ -28,7 +28,7 @@ public class Floor {
         }
         this.upButtonPressed = true;
         FloorCall up = new FloorCall(this.floorNumber, 1);
-        this.floorCalls.add(up.getDirection());
+        this.floorCalls.add(1);
         return up;
     }
 
@@ -43,7 +43,7 @@ public class Floor {
         }
         this.downButtonPressed = true;
         FloorCall down = new FloorCall(this.floorNumber, 0);
-        this.floorCalls.add(down.getDirection());
+        this.floorCalls.add(0);
         return down;
     }
 

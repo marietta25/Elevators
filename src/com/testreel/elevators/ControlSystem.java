@@ -20,14 +20,25 @@ public class ControlSystem {
         this.downRequests = new TreeSet<>();
     }
 
+    public FloorCall findStop(int floor, int direction) {
+        for (int i = 0; i < this.calledFloors.size(); i++) {
+            FloorCall current = this.calledFloors.get(i);
+            if (current.getFloorNumber() == floor && current.getDirection() == direction) {
+                return current;
+            }
+        }
+        return null;
+    }
 
     public boolean removeStop(int floor, String direction) {
         if (direction.toLowerCase() == "up") {
             this.upRequests.remove(floor);
+            this.calledFloors.remove(findStop(floor, 1));
             System.out.println("Removing floor call from up requests");
             return true;
         } else if (direction.toLowerCase() == "down") {
             this.downRequests.remove(floor);
+            this.calledFloors.remove(findStop(floor, 0));
             System.out.println("Removing floor call from down requests");
             return true;
         } else {
@@ -56,6 +67,12 @@ public class ControlSystem {
     public boolean addFloorCall(FloorCall call) {
         if (call != null) {
             if (addFloorCall(call.getFloorNumber(), call.getDirection())) {
+                synchronized (this.calledFloors) {
+
+                    this.calledFloors.add(call);
+                    this.calledFloors.notifyAll();
+                    System.out.println("Added floor call from " + call.getFloorNumber() + " to merged list");
+            }
                 return true;
             }
             return false;
@@ -65,6 +82,7 @@ public class ControlSystem {
     }
 
     public boolean addFloorCall(int floorNumber, int direction) {
+
 
         if (direction == 1) {
             // request to go up

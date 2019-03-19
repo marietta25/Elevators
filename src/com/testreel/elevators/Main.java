@@ -21,22 +21,21 @@ public class Main {
             current.getThread().start();
         }
 
-        //building.getElevators().get(0).setStatus(ElevatorStatus.GOING_DOWN);
-        //building.getElevators().get(1).setStatus(ElevatorStatus.GOING_DOWN);
+        t.sleep(5000); // wait for the elevators to start before making floor calls
 
         makeFloorCall(2, 1);
         makeFloorCall(13, 0);
-        makeFloorCall(1, 0);
-        makeFloorCall(13, 1);
+        //makeFloorCall(1, 0);
+        //makeFloorCall(13, 1);
         makeFloorCall(5, 1);
 
-        makeFloorCall(3, 0);
+        //makeFloorCall(3, 0);
 
-        t.sleep(10000);
-        makeFloorCall(7, 1);
+        //t.sleep(10000);
+        //makeFloorCall(7, 1);
 
-        t.sleep(5000);
-        makeFloorCall(4, 0);
+        //t.sleep(5000);
+        //makeFloorCall(4, 0);
 
 
         System.out.println("down req " + controlSystem.getDownRequests());
@@ -45,9 +44,9 @@ public class Main {
 
 
         System.out.println("-------------");
-        System.out.println(building.getFloors().get(1).isUpButtonPressed());
-        System.out.println(building.getFloors().get(1).isDownButtonPressed());
-        System.out.println(building.getFloors().get(2).isUpButtonPressed());
+//        System.out.println(building.getFloors().get(1).isUpButtonPressed());
+//        System.out.println(building.getFloors().get(1).isDownButtonPressed());
+//        System.out.println(building.getFloors().get(2).isUpButtonPressed());
 
     }
 
@@ -55,9 +54,5 @@ public class Main {
         FloorCall newCall = controlSystem.makeFloorCall(floor, direction);
         controlSystem.addFloorCall(newCall);
     }
-
-//    public static void makeFloorCall(FloorCall call) {
-//        controlSystem.addFloorCall(call);
-//    }
 
 }

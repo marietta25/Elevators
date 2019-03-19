@@ -9,7 +9,7 @@ public class Elevator implements Runnable {
     private int elevatorNumber;
     private int currentFloor;
     private boolean inMove;
-    private ElevatorStatus status;
+    private String currentDirection;
     private TreeSet<Integer> requestedFloorsUp;
     private TreeSet<Integer> requestedFloorsDown;
     private ControlSystem controlSystem;
@@ -25,7 +25,7 @@ public class Elevator implements Runnable {
             this.currentFloor = currentFloor;
         }
 
-        this.status = ElevatorStatus.GOING_UP;
+        this.currentDirection = "UP";
         this.requestedFloorsUp = new TreeSet<>();
         this.requestedFloorsDown = new TreeSet<>();
         this.controlSystem = controlSystem;
@@ -43,11 +43,11 @@ public class Elevator implements Runnable {
             return false;
         }
 
-        if (this.status == ElevatorStatus.GOING_UP) {
+        if (this.currentDirection.equals("UP")) {
             System.out.println(color + "Pressed button to stop at floor " + floor);
             this.requestedFloorsUp.add(floor);
             return true;
-        } else if (this.status == ElevatorStatus.GOING_DOWN) {
+        } else if (this.currentDirection.equals("DOWN")) {
             System.out.println(color + "Pressed button to stop at floor " + floor);
             this.requestedFloorsDown.add(floor);
             return true;
@@ -55,51 +55,91 @@ public class Elevator implements Runnable {
         return false;
     }
 
+    public synchronized void determineDirection() {
+        //TreeSet<Integer> upRequests = controlSystem.getUpRequests();
+        //TreeSet<Integer> downRequests = controlSystem.getDownRequests();
+
+        if (this.currentFloor == 13 && this.currentDirection.equals("UP")) {
+            this.currentDirection = "DOWN";
+        } else if (this.currentFloor == 1 && this.currentDirection.equals("DOWN")) {
+            this.currentDirection = "UP";
+        }
+    }
+
     public int getNextStop() throws InterruptedException {
-        //List<FloorCall> calledFloors = controlSystem.getCalledFloors();
+        List<FloorCall> calledFloors = controlSystem.getCalledFloors();
         TreeSet<Integer> upRequests = controlSystem.getUpRequests();
         TreeSet<Integer> downRequests = controlSystem.getDownRequests();
-        Iterator<Integer> i = upRequests.iterator();
 
-        if (this.status == ElevatorStatus.GOING_UP) {
-            // see if there are more requests to go up
-            System.out.println("going up requests " + this.requestedFloorsUp);
 
-            synchronized (upRequests) {
-                while (upRequests.isEmpty()) {
-                    System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
-                    upRequests.wait();
-                    //return null;
+        synchronized (calledFloors) {
+            while (upRequests.isEmpty() && downRequests.isEmpty() && this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
+                System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
+                calledFloors.wait();
+            }
+            System.out.println(color + this.elevatorNumber + " pressed up buttons " + this.requestedFloorsUp);
+            System.out.println(color + this.elevatorNumber + " pressed down buttons " + this.requestedFloorsDown);
+
+            if (this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
+                Integer nextStop = null;
+
+                if (!upRequests.isEmpty()) {
+                    nextStop = upRequests.first();
+                    controlSystem.removeStop(nextStop, "up");
+                } else {
+                    nextStop = downRequests.last();
+                    controlSystem.removeStop(nextStop, "down");
                 }
 
-                int nextStop = upRequests.first();
+                System.out.println(color + "getnextstop " + nextStop);
+                calledFloors.notifyAll();
+                return nextStop;
+            } else if (!this.requestedFloorsUp.isEmpty()) {
+                Integer nextStop = null;
+                Integer nextUpRequest = this.requestedFloorsUp.higher(this.currentFloor);
+
+                if (!upRequests.isEmpty()) {
+                    nextStop = upRequests.first();
+                }
+
+                if (nextStop == null && nextUpRequest == null) {
+                    nextStop = this.requestedFloorsUp.first();
+                } else if (nextStop == null && nextUpRequest != null) {
+                    nextStop = nextUpRequest;
+                } else if (nextStop != null && nextUpRequest != null && nextUpRequest < nextStop) {
+                    nextStop = nextUpRequest;
+                }
+
                 System.out.println(color + "getnextstop " + nextStop);
                 controlSystem.removeStop(nextStop, "up");
-                upRequests.notifyAll();
+                calledFloors.notifyAll();
                 return nextStop;
-            }
-        }
-        if (this.status == ElevatorStatus.GOING_DOWN) {
-            // see if there are more requests to go down
-            System.out.println("going down requests " + this.requestedFloorsDown);
 
-            synchronized (downRequests) {
-                while (downRequests.isEmpty()) {
-                    System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
-                    downRequests.wait();
-                    //return null;
+            } else if (!this.requestedFloorsDown.isEmpty()) {
+                Integer nextStop = null;
+                Integer nextDownRequest = this.requestedFloorsDown.lower(this.currentFloor);
+
+                if (!downRequests.isEmpty()) {
+                    nextStop = downRequests.last();
                 }
 
-                int nextStop = downRequests.last();
+                if (nextStop == null && nextDownRequest == null) {
+                    nextStop = this.requestedFloorsDown.last();
+                } else if (nextStop == null && nextDownRequest != null) {
+                    nextStop = nextDownRequest;
+                } else if (nextStop != null && nextDownRequest != null && nextDownRequest > nextStop) {
+                    nextStop = nextDownRequest;
+                }
+
                 System.out.println(color + "getnextstop " + nextStop);
                 controlSystem.removeStop(nextStop, "down");
-                downRequests.notifyAll();
+                calledFloors.notifyAll();
                 return nextStop;
+
+            } else {
+                System.out.println(color + " got no next stop");
+                return -1;
             }
-        } else {
-            // elevator is currently not moving
-            System.out.println(color + "Elevator " + this.elevatorNumber + " Not sure what to do");
-            return -1;
         }
     }
 
@@ -116,21 +156,19 @@ public class Elevator implements Runnable {
         }
 
         int floorButtonUp = 11;
-        int floorButtonDown = 1;
+        //int floorButtonDown = 1;
 
         // todo - unpress call request button on destination floor
         // passengers choose floor to go up or down
-        if (this.status == ElevatorStatus.GOING_UP) {
-            pressFloorButton(floorButtonUp);
-        } else {
-            pressFloorButton(floorButtonDown);
-        }
+        pressFloorButton(floorButtonUp);
+        //pressFloorButton(floorButtonDown);
 
     }
 
     public boolean move(int destinationFloor) {
         // todo - should include list of floors (pressedbuttons)
         this.inMove = true;
+        determineDirection();
 
         if (this.currentFloor != destinationFloor) {
             System.out.println(color + "Elevator " + this.elevatorNumber + " is starting to move from floor " + this.currentFloor);
@@ -139,24 +177,24 @@ public class Elevator implements Runnable {
         while (true) {
             if (destinationFloor < this.currentFloor) {
                 // 2 sec to reach next floor
-                this.status = ElevatorStatus.GOING_DOWN;
+                this.currentDirection = "DOWN";
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 this.currentFloor--;
-                System.out.println(color + "Elevator " + this.elevatorNumber + " is moving down, reached floor " + this.currentFloor);
+                System.out.println(color + "Elevator " + this.elevatorNumber + " is going " + this.currentDirection + ", reached floor " + this.currentFloor);
             } else if (destinationFloor > this.currentFloor) {
                 // 2 sec to reach next floor
-                this.status = ElevatorStatus.GOING_UP;
+                this.currentDirection = "UP";
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 this.currentFloor++;
-                System.out.println(color + "Elevator " + this.elevatorNumber + " is moving up, reached floor " + this.currentFloor);
+                System.out.println(color + "Elevator " + this.elevatorNumber + " is going " + this.currentDirection + ", reached floor " + this.currentFloor);
             } else {
                 // reached destination floor
                 this.currentFloor = destinationFloor;
@@ -175,16 +213,12 @@ public class Elevator implements Runnable {
         return currentFloor;
     }
 
-    public ElevatorStatus getStatus() {
-        return status;
-    }
-
     public boolean isInMove() {
         return inMove;
     }
 
-    public void setStatus(ElevatorStatus status) {
-        this.status = status;
+    public String getCurrentDirection() {
+        return currentDirection;
     }
 
     public TreeSet<Integer> getRequestedFloorsUp() {
