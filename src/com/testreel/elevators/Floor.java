@@ -14,10 +14,10 @@ public class Floor {
         this.floorNumber = floorNumber;
         this.upButtonPressed = false;
         this.downButtonPressed = false;
-        this.floorCalls = new TreeSet<>();
+        //this.floorCalls = new TreeSet<>();
     }
 
-    public FloorCall callToGoUp() {
+    public FloorCall callToGoUp(int destinationFloor) {
         if (upButtonPressed) {
             System.out.println("Already called elevator to go up");
             return null;
@@ -27,12 +27,12 @@ public class Floor {
             return null;
         }
         this.upButtonPressed = true;
-        FloorCall up = new FloorCall(this.floorNumber, 1);
-        this.floorCalls.add(1);
+        FloorCall up = new FloorCall(this.floorNumber, destinationFloor, 1);
+        //this.floorCalls.add(1);
         return up;
     }
 
-    public FloorCall callToGoDown() {
+    public FloorCall callToGoDown(int destinationFloor) {
         if (downButtonPressed) {
             System.out.println("Already called elevator to go down");
             return null;
@@ -42,8 +42,8 @@ public class Floor {
             return null;
         }
         this.downButtonPressed = true;
-        FloorCall down = new FloorCall(this.floorNumber, 0);
-        this.floorCalls.add(0);
+        FloorCall down = new FloorCall(this.floorNumber, destinationFloor, 0);
+        //this.floorCalls.add(0);
         return down;
     }
 

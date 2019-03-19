@@ -9,36 +9,36 @@ public class ControlSystem {
     private List<Elevator> elevators;
     private List<Floor> floors;
     private List<FloorCall> calledFloors;
-    private TreeSet<Integer> upRequests;
-    private TreeSet<Integer> downRequests;
+    private ArrayList<FloorCall> upRequests;
+    private ArrayList<FloorCall> downRequests;
 
     public ControlSystem(List<Elevator> elevators, List<Floor> floors) {
         this.elevators = elevators;
         this.floors = floors;
         this.calledFloors = new ArrayList<>();
-        this.upRequests = new TreeSet<>();
-        this.downRequests = new TreeSet<>();
+        this.upRequests = new ArrayList<>();
+        this.downRequests = new ArrayList<>();
     }
 
-    public FloorCall findStop(int floor, int direction) {
+    public synchronized FloorCall findStop(int startFloor, int destinationFloor) {
         for (int i = 0; i < this.calledFloors.size(); i++) {
             FloorCall current = this.calledFloors.get(i);
-            if (current.getFloorNumber() == floor && current.getDirection() == direction) {
+            if (current.getStartFloor() == startFloor && current.getDestinationFloor() == destinationFloor) {
                 return current;
             }
         }
         return null;
     }
 
-    public boolean removeStop(int floor, String direction) {
+    public synchronized boolean removeStop(int floor, int destinationFloor, String direction) {
         if (direction.toLowerCase() == "up") {
-            this.upRequests.remove(floor);
-            this.calledFloors.remove(findStop(floor, 1));
+            this.upRequests.remove(findStop(floor, destinationFloor));
+            this.calledFloors.remove(findStop(floor, destinationFloor));
             System.out.println("Removing floor call from up requests");
             return true;
         } else if (direction.toLowerCase() == "down") {
-            this.downRequests.remove(floor);
-            this.calledFloors.remove(findStop(floor, 0));
+            this.downRequests.remove(findStop(floor, destinationFloor));
+            this.calledFloors.remove(findStop(floor, destinationFloor));
             System.out.println("Removing floor call from down requests");
             return true;
         } else {
@@ -47,17 +47,17 @@ public class ControlSystem {
         }
     }
 
-    public FloorCall makeFloorCall(int floorNumber, int direction) {
-        Floor calledFrom = this.floors.get(floorNumber-1);
+    public FloorCall makeFloorCall(int fromFloor, int toFloor, int direction) {
+        Floor calledFrom = this.floors.get(fromFloor-1);
         FloorCall newCall;
 
         if (direction == 1) {
             // request to go up
-            newCall = calledFrom.callToGoUp();
+            newCall = calledFrom.callToGoUp(toFloor);
 
         } else if (direction == 0) {
             // request to go down
-            newCall = calledFrom.callToGoDown();
+            newCall = calledFrom.callToGoDown(toFloor);
         } else {
             return null;
         }
@@ -66,12 +66,12 @@ public class ControlSystem {
 
     public boolean addFloorCall(FloorCall call) {
         if (call != null) {
-            if (addFloorCall(call.getFloorNumber(), call.getDirection())) {
+            if (addFloorCall(call.getStartFloor(), call.getDestinationFloor(), call.getDirection())) {
                 synchronized (this.calledFloors) {
 
                     this.calledFloors.add(call);
                     this.calledFloors.notifyAll();
-                    System.out.println("Added floor call from " + call.getFloorNumber() + " to merged list");
+                    System.out.println("Added floor call from " + call.getStartFloor() + " to " + call.getDestinationFloor() + " to merged list");
             }
                 return true;
             }
@@ -81,27 +81,24 @@ public class ControlSystem {
         return false;
     }
 
-    public boolean addFloorCall(int floorNumber, int direction) {
-
+    public boolean addFloorCall(int startFloor, int destinationFloor, int direction) {
 
         if (direction == 1) {
             // request to go up
             synchronized (this.upRequests) {
-                System.out.println("Calling to go up from " + floorNumber);
 
-                this.upRequests.add(floorNumber);
+                this.upRequests.add(new FloorCall(startFloor, destinationFloor, direction));
                 this.upRequests.notifyAll();
-                System.out.println("Added floor call from " + floorNumber + " to list");
+                System.out.println("Added floor call from " + startFloor + " to list");
                 return true;
             }
         } else if (direction == 0) {
             // request to go down
             synchronized (this.downRequests) {
-                System.out.println("Calling to go down from " + floorNumber);
 
-                this.downRequests.add(floorNumber);
+                this.downRequests.add(new FloorCall(startFloor, destinationFloor, direction));
                 this.downRequests.notifyAll();
-                System.out.println("Added floor call from " + floorNumber + " to list");
+                System.out.println("Added floor call from " + startFloor + " to list");
                 return true;
             }
         } else {
@@ -121,11 +118,11 @@ public class ControlSystem {
         return calledFloors;
     }
 
-    public TreeSet<Integer> getUpRequests() {
+    public ArrayList<FloorCall> getUpRequests() {
         return upRequests;
     }
 
-    public TreeSet<Integer> getDownRequests() {
+    public ArrayList<FloorCall> getDownRequests() {
         return downRequests;
     }
 }

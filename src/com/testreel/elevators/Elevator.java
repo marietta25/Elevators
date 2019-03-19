@@ -10,8 +10,8 @@ public class Elevator implements Runnable {
     private int currentFloor;
     private boolean inMove;
     private String currentDirection;
-    private TreeSet<Integer> requestedFloorsUp;
-    private TreeSet<Integer> requestedFloorsDown;
+    private ArrayList<Integer> requestedFloorsUp;
+    private ArrayList<Integer> requestedFloorsDown;
     private ControlSystem controlSystem;
     private Thread thread;
     private String color; // to color different thread outputs in IntelliJ
@@ -26,14 +26,14 @@ public class Elevator implements Runnable {
         }
 
         this.currentDirection = "UP";
-        this.requestedFloorsUp = new TreeSet<>();
-        this.requestedFloorsDown = new TreeSet<>();
+        this.requestedFloorsUp = new ArrayList<>();
+        this.requestedFloorsDown = new ArrayList<>();
         this.controlSystem = controlSystem;
-        this.thread = new Thread(this,"Elevator " + this.elevatorNumber);
+        this.thread = new Thread(this, "Elevator " + this.elevatorNumber);
         this.color = color;
     }
 
-    public boolean pressFloorButton(int floor) {
+    /*public boolean pressFloorButton(int floor) {
         if (floor < 1 || floor > 13) {
             System.out.println(color + "Invalid floor");
             return false;
@@ -53,7 +53,7 @@ public class Elevator implements Runnable {
             return true;
         }
         return false;
-    }
+    }*/
 
     public synchronized void determineDirection() {
         //TreeSet<Integer> upRequests = controlSystem.getUpRequests();
@@ -67,9 +67,132 @@ public class Elevator implements Runnable {
     }
 
     public int getNextStop() throws InterruptedException {
+        //todo - debug adding passenger requests to floor requests
         List<FloorCall> calledFloors = controlSystem.getCalledFloors();
-        TreeSet<Integer> upRequests = controlSystem.getUpRequests();
-        TreeSet<Integer> downRequests = controlSystem.getDownRequests();
+        ArrayList<FloorCall> upRequests = controlSystem.getUpRequests();
+        ArrayList<FloorCall> downRequests = controlSystem.getDownRequests();
+
+
+        synchronized (calledFloors) {
+            while (upRequests.isEmpty() && downRequests.isEmpty() && this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
+                System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
+                calledFloors.wait();
+            }
+            System.out.println(color + this.elevatorNumber + " pressed up buttons " + this.requestedFloorsUp);
+            System.out.println(color + this.elevatorNumber + " pressed down buttons " + this.requestedFloorsDown);
+
+            if (this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
+                FloorCall nextStop;
+
+                if (!upRequests.isEmpty()) {
+                    for (FloorCall call : upRequests) {
+                        System.out.println(color + "iterating elev " + this.elevatorNumber + " calls " + call.getStartFloor() + " " + call.getDestinationFloor());
+                    }
+
+                    nextStop = upRequests.get(0);
+                    upRequests.remove(nextStop);
+                    controlSystem.removeStop(nextStop.getStartFloor(), nextStop.getDestinationFloor(), "up");
+                } else {
+                    nextStop = downRequests.get(downRequests.size()-1);
+                    downRequests.remove(nextStop);
+                    controlSystem.removeStop(nextStop.getStartFloor(), nextStop.getDestinationFloor(), "down");
+                }
+
+                System.out.println(color + "1---getnextstop " + nextStop.getStartFloor());
+                if (nextStop.getDirection() == 1) {
+                    this.requestedFloorsUp.add(nextStop.getDestinationFloor());
+                } else if (nextStop.getDirection() == 0) {
+                    this.requestedFloorsDown.add(nextStop.getDestinationFloor());
+                }
+
+                calledFloors.notifyAll();
+                return nextStop.getStartFloor();
+
+            } else if (!this.requestedFloorsUp.isEmpty()) {
+                FloorCall nextStop = null;
+
+                //todo - method to determine next floor up from current floor
+                //Integer nextUpRequest = this.requestedFloorsUp.higher(this.currentFloor);
+                Integer nextUpRequest = this.requestedFloorsUp.get(0);
+                System.out.println(color + "2----- nextuprequest " + nextUpRequest);
+
+                Integer requestedStop = null;
+
+                if (!upRequests.isEmpty()) {
+                    // there are pending floor calls
+                    for (FloorCall call : upRequests) {
+                        System.out.println(color + "iterating elev " + this.elevatorNumber + " calls " + call.getStartFloor() + " " + call.getDestinationFloor());
+                    }
+                    nextStop = upRequests.get(0);
+                } else {
+                    // there are no pending calls, only passenger requests from floor ie only integers
+                    requestedStop = nextUpRequest;
+                    System.out.println(color + " only passenger request");
+                    this.requestedFloorsUp.remove(requestedStop);
+                    return requestedStop;
+                }
+
+                if (nextStop == null) {
+                    System.out.println(color + " no floors to go to - null");
+                    return -1;
+                    //nextStop.setStartFloor(this.requestedFloorsUp.get(0));
+                } else if (nextStop == null && nextUpRequest != null) {
+                    nextStop.setStartFloor(nextUpRequest);
+                } else if (nextStop != null && nextUpRequest != null && nextUpRequest < nextStop.getStartFloor()) {
+                    nextStop.setStartFloor(nextUpRequest);
+                }
+
+                System.out.println(color + "2----getnextstop " + nextStop.getStartFloor());
+                upRequests.remove(nextStop);
+                controlSystem.removeStop(nextStop.getStartFloor(), nextStop.getDestinationFloor(), "up");
+                calledFloors.notifyAll();
+                return nextStop.getStartFloor();
+
+            } else if (!this.requestedFloorsDown.isEmpty()) {
+                FloorCall nextStop = null;
+                //todo - method to determine next floor down from current floor
+                //Integer nextDownRequest = this.requestedFloorsDown.lower(this.currentFloor);
+                Integer nextDownRequest = this.requestedFloorsDown.get(this.requestedFloorsDown.size()-1);
+
+                Integer requestedStop = null;
+
+                if (!downRequests.isEmpty()) {
+                    // there are pending floor calls
+                    nextStop = downRequests.get(downRequests.size()-1);
+                } else {
+                    // there are no pending calls, only passenger requests from floor ie only integers
+                    requestedStop = nextDownRequest;
+                    System.out.println(color + " only passenger request");
+                    this.requestedFloorsDown.remove(requestedStop);
+                    return requestedStop;
+                }
+
+                if (nextStop == null) {
+                    System.out.println(color + " no floors to go to - null");
+                    return -1;
+                } else if (nextStop == null && nextDownRequest != null) {
+                    nextStop.setStartFloor(nextDownRequest);
+                } else if (nextStop != null && nextDownRequest != null && nextDownRequest > nextStop.getStartFloor()) {
+                    nextStop.setStartFloor(nextDownRequest);
+                }
+
+                System.out.println(color + "3----getnextstop " + nextStop.getStartFloor());
+                downRequests.remove(nextStop);
+                controlSystem.removeStop(nextStop.getStartFloor(), nextStop.getDestinationFloor(), "down");
+                calledFloors.notifyAll();
+                return nextStop.getStartFloor();
+
+            } else {
+                System.out.println(color + " got no next stop");
+                return -1;
+            }
+        }
+    }
+
+    /*public int getNextStop() throws InterruptedException {
+        List<FloorCall> calledFloors = controlSystem.getCalledFloors();
+        TreeSet<FloorCall> upRequests = controlSystem.getUpRequests();
+        TreeSet<FloorCall> downRequests = controlSystem.getDownRequests();
 
 
         synchronized (calledFloors) {
@@ -141,7 +264,7 @@ public class Elevator implements Runnable {
                 return -1;
             }
         }
-    }
+    }*/
 
     public void stop() {
         // reached floor that the request came from
@@ -160,7 +283,7 @@ public class Elevator implements Runnable {
 
         // todo - unpress call request button on destination floor
         // passengers choose floor to go up or down
-        pressFloorButton(floorButtonUp);
+        //pressFloorButton(floorButtonUp);
         //pressFloorButton(floorButtonDown);
 
     }
@@ -221,11 +344,11 @@ public class Elevator implements Runnable {
         return currentDirection;
     }
 
-    public TreeSet<Integer> getRequestedFloorsUp() {
+    public ArrayList<Integer> getRequestedFloorsUp() {
         return requestedFloorsUp;
     }
 
-    public TreeSet<Integer> getRequestedFloorsDown() {
+    public ArrayList<Integer> getRequestedFloorsDown() {
         return requestedFloorsDown;
     }
 

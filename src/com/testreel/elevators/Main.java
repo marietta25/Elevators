@@ -23,19 +23,19 @@ public class Main {
 
         t.sleep(5000); // wait for the elevators to start before making floor calls
 
-        makeFloorCall(2, 1);
-        makeFloorCall(13, 0);
+        makeFloorCall(2, 6);
+        makeFloorCall(13, 8);
         //makeFloorCall(1, 0);
         //makeFloorCall(13, 1);
-        makeFloorCall(5, 1);
+        makeFloorCall(5, 3);
 
         //makeFloorCall(3, 0);
 
         //t.sleep(10000);
         //makeFloorCall(7, 1);
 
-        //t.sleep(5000);
-        //makeFloorCall(4, 0);
+        t.sleep(5000);
+        makeFloorCall(4, 1);
 
 
         System.out.println("down req " + controlSystem.getDownRequests());
@@ -50,8 +50,17 @@ public class Main {
 
     }
 
-    public static void makeFloorCall(int floor, int direction) {
-        FloorCall newCall = controlSystem.makeFloorCall(floor, direction);
+    public static void makeFloorCall(int fromFloor, int toFloor) {
+        int direction;
+        if (fromFloor > toFloor) {
+            direction = 0;
+        } else if (fromFloor < toFloor) {
+            direction = 1;
+        } else {
+            System.out.println("Already on floor " + toFloor);
+            return;
+        }
+        FloorCall newCall = controlSystem.makeFloorCall(fromFloor, toFloor, direction);
         controlSystem.addFloorCall(newCall);
     }
 
