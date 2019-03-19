@@ -124,6 +124,7 @@ public class Elevator implements Runnable {
                         System.out.println(color + "iterating elev " + this.elevatorNumber + " calls " + call.getStartFloor() + " " + call.getDestinationFloor());
                     }
                     nextStop = upRequests.get(0);
+                    this.requestedFloorsUp.add(nextStop.getDestinationFloor());
                 } else {
                     // there are no pending calls, only passenger requests from floor ie only integers
                     requestedStop = nextUpRequest;
@@ -159,6 +160,7 @@ public class Elevator implements Runnable {
                 if (!downRequests.isEmpty()) {
                     // there are pending floor calls
                     nextStop = downRequests.get(downRequests.size()-1);
+                    this.requestedFloorsDown.add(nextStop.getDestinationFloor());
                 } else {
                     // there are no pending calls, only passenger requests from floor ie only integers
                     requestedStop = nextDownRequest;

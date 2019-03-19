@@ -82,7 +82,7 @@ public class ControlSystem {
     }
 
     public boolean addFloorCall(int startFloor, int destinationFloor, int direction) {
-
+        // todo - sort floor calls on addition
         if (direction == 1) {
             // request to go up
             synchronized (this.upRequests) {
