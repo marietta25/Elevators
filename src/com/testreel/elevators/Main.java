@@ -7,33 +7,15 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
 
-        Thread t = Thread.currentThread();
-        System.out.println("Current thread: " + t);
-        t.setName("Main thread");
-
+        // generate floors and elevators
         building.generateFloors();
         building.generateElevators();
 
-
-        //t.sleep(5000); // wait for the elevators to start before making floor calls
-
+        // make some floor calls before starting the elevators
         makeFloorCall(2, 6);
-        //makeFloorCall(13, 8);
         makeFloorCall(2, 7);
-        //makeFloorCall(2, 9);
-        //makeFloorCall(13, 1);
         makeFloorCall(5, 3);
         makeFloorCall(10, 12);
-        //makeFloorCall(5, 4);
-        //makeFloorCall(5, 2);
-
-        //makeFloorCall(3, 1);
-
-        //t.sleep(10000);
-        //makeFloorCall(7, 1);
-
-
-
 
         // start elevators
         for (int i = 0; i < building.getElevators().size(); i++) {
@@ -41,11 +23,18 @@ public class Main {
             current.getThread().start();
         }
 
-        t.sleep(5000);
+        // wait some time and make new floor calls
+        Thread.sleep(3000);
         makeFloorCall(3, 1);
 
+        Thread.sleep(1000);
+        makeFloorCall(13, 8);
 
-        System.out.println("-------------");
+        Thread.sleep(500);
+        makeFloorCall(8, 1);
+
+        Thread.sleep(5000);
+        makeFloorCall(4, 9);
 
     }
 
@@ -64,7 +53,8 @@ public class Main {
             return;
         }
         FloorCall newCall = controlSystem.makeFloorCall(fromFloor, toFloor, direction);
-        controlSystem.addFloorCall(newCall);
+        if (!controlSystem.addFloorCall(newCall)) {
+            System.out.println("Could not add floor request to call stack");
+        }
     }
-
 }
