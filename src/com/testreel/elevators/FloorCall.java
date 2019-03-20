@@ -26,10 +26,6 @@ public class FloorCall {
         return direction;
     }
 
-    public void setDirection(int direction) {
-        this.direction = direction;
-    }
-
     public void setStartFloor(int startFloor) {
         this.startFloor = startFloor;
     }

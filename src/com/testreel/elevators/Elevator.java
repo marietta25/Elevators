@@ -33,7 +33,7 @@ public class Elevator implements Runnable {
         this.color = color;
     }
 
-    public synchronized void determineDirection() {
+    private synchronized void determineDirection() {
         //TreeSet<Integer> upRequests = controlSystem.getUpRequests();
         //TreeSet<Integer> downRequests = controlSystem.getDownRequests();
 
@@ -44,7 +44,7 @@ public class Elevator implements Runnable {
         }
     }
 
-    public int getNextStop() throws InterruptedException {
+    private int getNextStop() throws InterruptedException {
         //todo - debug adding passenger requests to floor requests
         List<FloorCall> calledFloors = controlSystem.getCalledFloors();
         ArrayList<FloorCall> upRequests = controlSystem.getUpRequests();
@@ -218,8 +218,8 @@ public class Elevator implements Runnable {
         }
     }
 
-    public void stop() {
-        // reached floor that the request came from
+    private void stop() {
+        // reached floor that the request came from or reached requested destination floor
         System.out.println(color + "Elevator " + this.elevatorNumber + " stopping on floor " + this.currentFloor);
         this.inMove = false;
 
@@ -231,8 +231,21 @@ public class Elevator implements Runnable {
         }
     }
 
-    public boolean move(int destinationFloor) {
-        // todo - should include list of floors (pressedbuttons)
+    private void moveBetweenFloors() {
+        // 2 sec to reach next floor
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void move(int destinationFloor) {
+        if (destinationFloor < 1 || destinationFloor > 13) {
+            System.out.println("Invalid destination floor");
+            return;
+        }
+
         this.inMove = true;
         determineDirection();
 
@@ -242,31 +255,21 @@ public class Elevator implements Runnable {
 
         while (true) {
             if (destinationFloor < this.currentFloor) {
-                // 2 sec to reach next floor
                 this.currentDirection = "DOWN";
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                moveBetweenFloors();
                 this.currentFloor--;
                 System.out.println(color + "Elevator " + this.elevatorNumber + " is going " + this.currentDirection + ", reached floor " + this.currentFloor);
             } else if (destinationFloor > this.currentFloor) {
-                // 2 sec to reach next floor
+
                 this.currentDirection = "UP";
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                moveBetweenFloors();
                 this.currentFloor++;
                 System.out.println(color + "Elevator " + this.elevatorNumber + " is going " + this.currentDirection + ", reached floor " + this.currentFloor);
             } else {
                 // reached destination floor
                 this.currentFloor = destinationFloor;
                 stop();
-
-                return true;
+                return;
             }
         }
     }

@@ -15,8 +15,6 @@ public class Main {
         building.generateElevators();
 
 
-
-
         //t.sleep(5000); // wait for the elevators to start before making floor calls
 
         makeFloorCall(2, 6);
@@ -51,7 +49,7 @@ public class Main {
 
     }
 
-    public static void makeFloorCall(int fromFloor, int toFloor) {
+    private static void makeFloorCall(int fromFloor, int toFloor) {
         int direction;
         if (fromFloor > 13 || fromFloor < 1 || toFloor > 13 || toFloor < 1) {
             System.out.println("Invalid floor");
