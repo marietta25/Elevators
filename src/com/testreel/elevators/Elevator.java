@@ -53,6 +53,7 @@ public class Elevator implements Runnable {
 
         synchronized (calledFloors) {
             while (upRequests.isEmpty() && downRequests.isEmpty() && this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
+                // no floor calls nor passenger requests are left to serve
                 System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
                 calledFloors.wait();
             }
@@ -60,17 +61,11 @@ public class Elevator implements Runnable {
             Collections.sort(this.requestedFloorsUp);
             Collections.sort(this.requestedFloorsDown);
 
-            /*for (FloorCall call : upRequests) {
-                System.out.println(color + this.elevatorNumber + " cont sys uprequests " + call.getStartFloor() + " " + call.getDestinationFloor());
-            }
-            for (FloorCall call : downRequests) {
-                System.out.println(color + this.elevatorNumber + " cont sys downrequests " + call.getStartFloor() + " " + call.getDestinationFloor());
-            }*/
-
             System.out.println(color + this.elevatorNumber + " pressed up buttons " + this.requestedFloorsUp);
             System.out.println(color + this.elevatorNumber + " pressed down buttons " + this.requestedFloorsDown);
 
             if (this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
+                // only floor calls, eg no passenger requests yet
                 FloorCall nextStop;
 
                 if (!upRequests.isEmpty()) {
@@ -80,10 +75,40 @@ public class Elevator implements Runnable {
 
                     nextStop = upRequests.get(0);
                     upRequests.remove(nextStop);
+
+                    // find if there is more requests to go up on that floor
+                    List<FloorCall> stopsToRemove = new ArrayList<>();
+                    for (int i = 0; i < upRequests.size(); i++) {
+                        FloorCall current = upRequests.get(i);
+                        if (current.getStartFloor() == nextStop.getStartFloor()) {
+                            System.out.println("Found more up requests from the same floor " + current.getDestinationFloor());
+                            stopsToRemove.add(current);
+                            this.requestedFloorsUp.add(current.getDestinationFloor());
+                            controlSystem.removeStop(current.getStartFloor(), current.getDestinationFloor(), "up");
+                        }
+                    }
+                    // remove found requests
+                    upRequests.removeAll(stopsToRemove);
+
                     controlSystem.removeStop(nextStop.getStartFloor(), nextStop.getDestinationFloor(), "up");
                 } else {
                     nextStop = downRequests.get(downRequests.size()-1);
                     downRequests.remove(nextStop);
+
+                    // find if there is more requests to go down on that floor
+                    List<FloorCall> stopsToRemove = new ArrayList<>();
+                    for (int i = 0; i < downRequests.size(); i++) {
+                        FloorCall current = downRequests.get(i);
+                        if (current.getStartFloor() == nextStop.getStartFloor()) {
+                            System.out.println("Found more down requests from the same floor " + current.getDestinationFloor());
+                            stopsToRemove.add(current);
+                            this.requestedFloorsDown.add(current.getDestinationFloor());
+                            controlSystem.removeStop(current.getStartFloor(), current.getDestinationFloor(), "down");
+                        }
+                    }
+                    // remove found requests
+                    downRequests.removeAll(stopsToRemove);
+
                     controlSystem.removeStop(nextStop.getStartFloor(), nextStop.getDestinationFloor(), "down");
                 }
 
@@ -113,6 +138,12 @@ public class Elevator implements Runnable {
                         System.out.println(color + "iterating elev " + this.elevatorNumber + " calls " + call.getStartFloor() + " " + call.getDestinationFloor());
                     }
                     nextStop = upRequests.get(0);
+
+                    if (nextStop.getStartFloor() == nextUpRequest) {
+                        // remove double floor calls
+                        System.out.println("Remove double up call");
+                        this.requestedFloorsUp.remove(nextUpRequest);
+                    }
                     this.requestedFloorsUp.add(nextStop.getDestinationFloor());
                 } else {
                     // there are no pending calls, only passenger requests from floor ie only integers
@@ -149,6 +180,13 @@ public class Elevator implements Runnable {
                 if (!downRequests.isEmpty()) {
                     // there are pending floor calls
                     nextStop = downRequests.get(downRequests.size()-1);
+
+                    if (nextStop.getStartFloor() == nextDownRequest) {
+                        // remove double floor calls
+                        System.out.println("Remove double down call");
+                        this.requestedFloorsDown.remove(nextDownRequest);
+                    }
+
                     this.requestedFloorsDown.add(nextStop.getDestinationFloor());
                 } else {
                     // there are no pending calls, only passenger requests from floor ie only integers
@@ -179,83 +217,6 @@ public class Elevator implements Runnable {
             }
         }
     }
-
-    /*public int getNextStop() throws InterruptedException {
-        List<FloorCall> calledFloors = controlSystem.getCalledFloors();
-        TreeSet<FloorCall> upRequests = controlSystem.getUpRequests();
-        TreeSet<FloorCall> downRequests = controlSystem.getDownRequests();
-
-
-        synchronized (calledFloors) {
-            while (upRequests.isEmpty() && downRequests.isEmpty() && this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
-                System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
-                calledFloors.wait();
-            }
-            System.out.println(color + this.elevatorNumber + " pressed up buttons " + this.requestedFloorsUp);
-            System.out.println(color + this.elevatorNumber + " pressed down buttons " + this.requestedFloorsDown);
-
-            if (this.requestedFloorsUp.isEmpty() && this.requestedFloorsDown.isEmpty()) {
-                Integer nextStop = null;
-
-                if (!upRequests.isEmpty()) {
-                    nextStop = upRequests.first();
-                    controlSystem.removeStop(nextStop, "up");
-                } else {
-                    nextStop = downRequests.last();
-                    controlSystem.removeStop(nextStop, "down");
-                }
-
-                System.out.println(color + "getnextstop " + nextStop);
-                calledFloors.notifyAll();
-                return nextStop;
-            } else if (!this.requestedFloorsUp.isEmpty()) {
-                Integer nextStop = null;
-                Integer nextUpRequest = this.requestedFloorsUp.higher(this.currentFloor);
-
-                if (!upRequests.isEmpty()) {
-                    nextStop = upRequests.first();
-                }
-
-                if (nextStop == null && nextUpRequest == null) {
-                    nextStop = this.requestedFloorsUp.first();
-                } else if (nextStop == null && nextUpRequest != null) {
-                    nextStop = nextUpRequest;
-                } else if (nextStop != null && nextUpRequest != null && nextUpRequest < nextStop) {
-                    nextStop = nextUpRequest;
-                }
-
-                System.out.println(color + "getnextstop " + nextStop);
-                controlSystem.removeStop(nextStop, "up");
-                calledFloors.notifyAll();
-                return nextStop;
-
-            } else if (!this.requestedFloorsDown.isEmpty()) {
-                Integer nextStop = null;
-                Integer nextDownRequest = this.requestedFloorsDown.lower(this.currentFloor);
-
-                if (!downRequests.isEmpty()) {
-                    nextStop = downRequests.last();
-                }
-
-                if (nextStop == null && nextDownRequest == null) {
-                    nextStop = this.requestedFloorsDown.last();
-                } else if (nextStop == null && nextDownRequest != null) {
-                    nextStop = nextDownRequest;
-                } else if (nextStop != null && nextDownRequest != null && nextDownRequest > nextStop) {
-                    nextStop = nextDownRequest;
-                }
-
-                System.out.println(color + "getnextstop " + nextStop);
-                controlSystem.removeStop(nextStop, "down");
-                calledFloors.notifyAll();
-                return nextStop;
-
-            } else {
-                System.out.println(color + " got no next stop");
-                return -1;
-            }
-        }
-    }*/
 
     public void stop() {
         // reached floor that the request came from

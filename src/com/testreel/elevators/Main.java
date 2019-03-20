@@ -15,36 +15,39 @@ public class Main {
         building.generateElevators();
 
 
+
+
+        //t.sleep(5000); // wait for the elevators to start before making floor calls
+
+        makeFloorCall(2, 6);
+        //makeFloorCall(13, 8);
+        makeFloorCall(2, 7);
+        //makeFloorCall(2, 9);
+        //makeFloorCall(13, 1);
+        makeFloorCall(5, 3);
+        makeFloorCall(10, 12);
+        //makeFloorCall(5, 4);
+        //makeFloorCall(5, 2);
+
+        //makeFloorCall(3, 1);
+
+        //t.sleep(10000);
+        //makeFloorCall(7, 1);
+
+
+
+
         // start elevators
         for (int i = 0; i < building.getElevators().size(); i++) {
             Elevator current = building.getElevators().get(i);
             current.getThread().start();
         }
 
-        t.sleep(5000); // wait for the elevators to start before making floor calls
-
-        makeFloorCall(2, 6);
-        //makeFloorCall(13, 8);
-        //makeFloorCall(1, 0);
-        //makeFloorCall(13, 1);
-        makeFloorCall(5, 3);
-        makeFloorCall(5, 2);
-
+        t.sleep(5000);
         makeFloorCall(3, 1);
-
-        //t.sleep(10000);
-        //makeFloorCall(7, 1);
-
-        //t.sleep(5000);
-        //makeFloorCall(4, 1);
-
-
 
 
         System.out.println("-------------");
-//        System.out.println(building.getFloors().get(1).isUpButtonPressed());
-//        System.out.println(building.getFloors().get(1).isDownButtonPressed());
-//        System.out.println(building.getFloors().get(2).isUpButtonPressed());
 
     }
 
