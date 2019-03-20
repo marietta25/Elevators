@@ -17,13 +17,14 @@ public class Building {
     }
 
     public void generateElevators() {
-        // at the start, place elevators on different floors
+        // at the start, place 3 elevators on different floors and give them differently colored outputs (in intelliJ)
         this.elevators.add(0, new Elevator(1, 1, controlSystem, TheadColor.ANSI_BLUE));
         this.elevators.add(1, new Elevator(2, 6, controlSystem, TheadColor.ANSI_GREEN));
         this.elevators.add(2, new Elevator(3, 12, controlSystem, TheadColor.ANSI_PURPLE));
     }
 
     public void generateFloors() {
+        // generate 13 floors for the building
         for (int i = 0; i < 13; i++) {
             this.floors.add(i, new Floor(i+1));
         }
