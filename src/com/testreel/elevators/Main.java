@@ -12,11 +12,7 @@ public class Main {
         t.setName("Main thread");
 
         building.generateFloors();
-        //building.generateElevators();
-
-        building.getElevators().add(0, new Elevator(1, 1, controlSystem, TheadColor.ANSI_BLUE));
-        building.getElevators().add(1, new Elevator(2, 1, controlSystem, TheadColor.ANSI_GREEN));
-        building.getElevators().add(2, new Elevator(3, 1, controlSystem, TheadColor.ANSI_PURPLE));
+        building.generateElevators();
 
 
         // start elevators
@@ -25,44 +21,49 @@ public class Main {
             current.getThread().start();
         }
 
-        //building.getElevators().get(0).setStatus(ElevatorStatus.GOING_DOWN);
-        //building.getElevators().get(1).setStatus(ElevatorStatus.GOING_DOWN);
+        t.sleep(5000); // wait for the elevators to start before making floor calls
 
-        makeFloorCall(2, 1);
-        makeFloorCall(13, 0);
-        makeFloorCall(1, 0);
-        makeFloorCall(13, 1);
-        makeFloorCall(5, 1);
+        makeFloorCall(2, 6);
+        //makeFloorCall(13, 8);
+        //makeFloorCall(1, 0);
+        //makeFloorCall(13, 1);
+        makeFloorCall(5, 3);
+        makeFloorCall(5, 2);
 
-        makeFloorCall(3, 0);
+        makeFloorCall(3, 1);
 
-        t.sleep(10000);
-        makeFloorCall(7, 1);
+        //t.sleep(10000);
+        //makeFloorCall(7, 1);
 
-        for (int i = 0; i < controlSystem.getCalledFloors().size(); i++) {
-            System.out.println(controlSystem.getCalledFloors().get(i).getFloorNumber());
-            System.out.println(controlSystem.getCalledFloors().get(i).getDirection());
-        }
+        //t.sleep(5000);
+        //makeFloorCall(4, 1);
+
 
 
 
         System.out.println("-------------");
-        System.out.println(building.getFloors().get(1).isUpButtonPressed());
-        System.out.println(building.getFloors().get(1).isDownButtonPressed());
-        System.out.println(building.getFloors().get(2).isUpButtonPressed());
+//        System.out.println(building.getFloors().get(1).isUpButtonPressed());
+//        System.out.println(building.getFloors().get(1).isDownButtonPressed());
+//        System.out.println(building.getFloors().get(2).isUpButtonPressed());
 
-
-        System.out.println(building.getElevators().get(0).getThread());
-        System.out.println(building.getElevators().get(1).getThread());
-        System.out.println(building.getElevators().get(2).getThread());
     }
 
-    public static void makeFloorCall(int floor, int direction) {
-        controlSystem.addFloorCall(floor, direction);
-    }
-
-    public static void makeFloorCall(FloorCall call) {
-        controlSystem.addFloorCall(call);
+    public static void makeFloorCall(int fromFloor, int toFloor) {
+        int direction;
+        if (fromFloor > 13 || fromFloor < 1 || toFloor > 13 || toFloor < 1) {
+            System.out.println("Invalid floor");
+            return;
+        }
+        if (fromFloor > toFloor) {
+            direction = 0;
+        } else if (fromFloor < toFloor) {
+            direction = 1;
+        } else {
+            System.out.println("Already on floor " + toFloor);
+            return;
+        }
+        FloorCall newCall = controlSystem.makeFloorCall(fromFloor, toFloor, direction);
+        controlSystem.addFloorCall(newCall);
     }
 
 }

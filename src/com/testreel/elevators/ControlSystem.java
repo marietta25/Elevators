@@ -1,92 +1,111 @@
 package com.testreel.elevators;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 
 public class ControlSystem {
 
     private List<Elevator> elevators;
     private List<Floor> floors;
     private List<FloorCall> calledFloors;
+    private ArrayList<FloorCall> upRequests;
+    private ArrayList<FloorCall> downRequests;
 
     public ControlSystem(List<Elevator> elevators, List<Floor> floors) {
         this.elevators = elevators;
         this.floors = floors;
         this.calledFloors = new ArrayList<>();
+        this.upRequests = new ArrayList<>();
+        this.downRequests = new ArrayList<>();
     }
 
-    public Elevator selectIdleElevator() {
-        for (int i = 0; i < this.elevators.size(); i++) {
-            Elevator current = this.elevators.get(i);
-            if (current.getStatus() == ElevatorStatus.STOPPED && (!current.isInMove())) {
-                System.out.println("Found idle elevator - " + current.getElevatorNumber() + " on floor " + current.getCurrentFloor());
+    public synchronized FloorCall findStop(int startFloor, int destinationFloor) {
+        for (int i = 0; i < this.calledFloors.size(); i++) {
+            FloorCall current = this.calledFloors.get(i);
+            if (current.getStartFloor() == startFloor && current.getDestinationFloor() == destinationFloor) {
                 return current;
             }
         }
         return null;
     }
 
-    public void sendElevator(FloorCall call) {
-        // can only send an elevator that is not currently moving
-        Elevator idleElevator = selectIdleElevator();
-
-        while (idleElevator == null) {
-            idleElevator = selectIdleElevator();
+    public synchronized boolean removeStop(int floor, int destinationFloor, String direction) {
+        if (direction.toLowerCase() == "up") {
+            this.upRequests.remove(findStop(floor, destinationFloor));
+            this.calledFloors.remove(findStop(floor, destinationFloor));
+            System.out.println("Removing floor call from up requests");
+            return true;
+        } else if (direction.toLowerCase() == "down") {
+            this.downRequests.remove(findStop(floor, destinationFloor));
+            this.calledFloors.remove(findStop(floor, destinationFloor));
+            System.out.println("Removing floor call from down requests");
+            return true;
+        } else {
+            System.out.println("Check direction parameter");
+            return false;
         }
-        // found elevator
-        //idleElevator.move(call);
     }
 
-    public boolean removeFloorCall(FloorCall call) {
-        for (int i = 0; i < this.calledFloors.size(); i++) {
-            FloorCall current = this.calledFloors.get(i);
-            if ((current.getFloorNumber() == call.getFloorNumber()) && (current.getDirection() == call.getDirection())) {
-                this.calledFloors.remove(current);
-                System.out.println("Removing floor call from list");
-                return true;
-            }
+    public FloorCall makeFloorCall(int fromFloor, int toFloor, int direction) {
+        Floor calledFrom = this.floors.get(fromFloor-1);
+        FloorCall newCall;
+
+        if (direction == 1) {
+            // request to go up
+            newCall = calledFrom.callToGoUp(toFloor);
+
+        } else if (direction == 0) {
+            // request to go down
+            newCall = calledFrom.callToGoDown(toFloor);
+        } else {
+            return null;
         }
-        System.out.println("No such floor call to remove");
-        return false;
+        return newCall;
     }
 
     public boolean addFloorCall(FloorCall call) {
-        if (addFloorCall(call.getFloorNumber(), call.getDirection())) {
-            sendElevator(call);
-            return true;
-        }
-        return false;
-    }
+        if (call != null) {
+            if (addFloorCall(call.getStartFloor(), call.getDestinationFloor(), call.getDirection())) {
+                synchronized (this.calledFloors) {
 
-    public synchronized boolean addFloorCall(int floorNumber, int direction) {
-        Floor calledFrom = this.floors.get(floorNumber-1);
-        FloorCall returned;
-
-        System.out.println("Calling from " + calledFrom.getFloorNumber());
-        if (direction == 1) {
-            returned = calledFrom.callToGoUp();
-        } else if (direction == 0) {
-            returned = calledFrom.callToGoDown();
-        } else {
-            System.out.println("Invalid direction - 1 to go up, 0 to go down");
+                    this.calledFloors.add(call);
+                    this.calledFloors.notifyAll();
+                    System.out.println("Added floor call from " + call.getStartFloor() + " to " + call.getDestinationFloor() + " to merged list");
+            }
+                return true;
+            }
             return false;
         }
 
-        if (returned != null) {
-            for (int i = 0; i < this.calledFloors.size(); i++) {
-                FloorCall current = this.calledFloors.get(i);
-                if ((current.getFloorNumber() == returned.getFloorNumber()) && (current.getDirection() == returned.getDirection())) {
-                    System.out.println("A call is already made from this floor");
-                    return false;
-                }
-            }
-            this.calledFloors.add(returned);
-            notifyAll();
-            System.out.println("Added floor call from " + returned.getFloorNumber() +" to list");
-
-            return true;
-        }
         return false;
+    }
+
+    public boolean addFloorCall(int startFloor, int destinationFloor, int direction) {
+        if (direction == 1) {
+            // request to go up
+            synchronized (this.upRequests) {
+
+                this.upRequests.add(new FloorCall(startFloor, destinationFloor, direction));
+                Collections.sort(this.upRequests, FloorCall.FloorCallSort);
+                this.upRequests.notifyAll();
+                System.out.println("Added floor call from " + startFloor + " to uprequest list");
+                return true;
+            }
+        } else if (direction == 0) {
+            // request to go down
+            synchronized (this.downRequests) {
+
+                this.downRequests.add(new FloorCall(startFloor, destinationFloor, direction));
+                Collections.sort(this.downRequests, FloorCall.FloorCallSort);
+                this.downRequests.notifyAll();
+                System.out.println("Added floor call from " + startFloor + " to downrequests list");
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
     public List<Elevator> getElevators() {
@@ -99,5 +118,13 @@ public class ControlSystem {
 
     public List<FloorCall> getCalledFloors() {
         return calledFloors;
+    }
+
+    public ArrayList<FloorCall> getUpRequests() {
+        return upRequests;
+    }
+
+    public ArrayList<FloorCall> getDownRequests() {
+        return downRequests;
     }
 }

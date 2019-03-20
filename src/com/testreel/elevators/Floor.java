@@ -1,45 +1,42 @@
 package com.testreel.elevators;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 public class Floor {
 
     private int floorNumber;
     private boolean upButtonPressed;
     private boolean downButtonPressed;
-    private FloorCall floorCall;
+    private Set<Integer> floorCalls; // for keeping track of calls to go up and down - max 1 up and 1 down per floor
 
     public Floor(int floorNumber) {
         this.floorNumber = floorNumber;
-        this.upButtonPressed = false;
-        this.downButtonPressed = false;
-        this.floorCall = null;
+        //this.upButtonPressed = false;
+        //this.downButtonPressed = false;
+        //this.floorCalls = new TreeSet<>();
     }
 
-    public FloorCall callToGoUp() {
-        if (upButtonPressed) {
-            System.out.println("Already called elevator to go up");
-            return null;
-        }
+    public FloorCall callToGoUp(int destinationFloor) {
         if (this.floorNumber == 13) {
             System.out.println("Cannot go up, final floor");
             return null;
         }
-        this.upButtonPressed = true;
-        this.floorCall = new FloorCall(this.floorNumber, 1);
-        return this.floorCall;
+        //this.upButtonPressed = true;
+        FloorCall up = new FloorCall(this.floorNumber, destinationFloor, 1);
+        //this.floorCalls.add(1);
+        return up;
     }
 
-    public FloorCall callToGoDown() {
-        if (downButtonPressed) {
-            System.out.println("Already called elevator to go down");
-            return null;
-        }
+    public FloorCall callToGoDown(int destinationFloor) {
         if (this.floorNumber == 1) {
             System.out.println("Cannot go down, on first floor");
             return null;
         }
-        this.downButtonPressed = true;
-        this.floorCall = new FloorCall(this.floorNumber, 0);
-        return this.floorCall;
+        //this.downButtonPressed = true;
+        FloorCall down = new FloorCall(this.floorNumber, destinationFloor, 0);
+        //this.floorCalls.add(0);
+        return down;
     }
 
     public int getFloorNumber() {
@@ -48,21 +45,5 @@ public class Floor {
 
     public void setFloorNumber(int floorNumber) {
         this.floorNumber = floorNumber;
-    }
-
-    public boolean isUpButtonPressed() {
-        return upButtonPressed;
-    }
-
-    public void setUpButtonPressed(boolean upButtonPressed) {
-        this.upButtonPressed = upButtonPressed;
-    }
-
-    public boolean isDownButtonPressed() {
-        return downButtonPressed;
-    }
-
-    public void setDownButtonPressed(boolean downButtonPressed) {
-        this.downButtonPressed = downButtonPressed;
     }
 }
