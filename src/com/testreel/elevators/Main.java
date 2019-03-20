@@ -24,22 +24,20 @@ public class Main {
         t.sleep(5000); // wait for the elevators to start before making floor calls
 
         makeFloorCall(2, 6);
-        makeFloorCall(13, 8);
+        //makeFloorCall(13, 8);
         //makeFloorCall(1, 0);
         //makeFloorCall(13, 1);
         makeFloorCall(5, 3);
+        makeFloorCall(5, 2);
 
-        //makeFloorCall(3, 0);
+        makeFloorCall(3, 1);
 
         //t.sleep(10000);
         //makeFloorCall(7, 1);
 
-        t.sleep(5000);
-        makeFloorCall(4, 1);
+        //t.sleep(5000);
+        //makeFloorCall(4, 1);
 
-
-        System.out.println("down req " + controlSystem.getDownRequests());
-        System.out.println("up req " +controlSystem.getUpRequests());
 
 
 
@@ -52,6 +50,10 @@ public class Main {
 
     public static void makeFloorCall(int fromFloor, int toFloor) {
         int direction;
+        if (fromFloor > 13 || fromFloor < 1 || toFloor > 13 || toFloor < 1) {
+            System.out.println("Invalid floor");
+            return;
+        }
         if (fromFloor > toFloor) {
             direction = 0;
         } else if (fromFloor < toFloor) {

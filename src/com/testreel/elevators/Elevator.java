@@ -33,28 +33,6 @@ public class Elevator implements Runnable {
         this.color = color;
     }
 
-    /*public boolean pressFloorButton(int floor) {
-        if (floor < 1 || floor > 13) {
-            System.out.println(color + "Invalid floor");
-            return false;
-        }
-        if (floor == this.currentFloor) {
-            System.out.println(color + "Already on " + floor + " floor");
-            return false;
-        }
-
-        if (this.currentDirection.equals("UP")) {
-            System.out.println(color + "Pressed button to stop at floor " + floor);
-            this.requestedFloorsUp.add(floor);
-            return true;
-        } else if (this.currentDirection.equals("DOWN")) {
-            System.out.println(color + "Pressed button to stop at floor " + floor);
-            this.requestedFloorsDown.add(floor);
-            return true;
-        }
-        return false;
-    }*/
-
     public synchronized void determineDirection() {
         //TreeSet<Integer> upRequests = controlSystem.getUpRequests();
         //TreeSet<Integer> downRequests = controlSystem.getDownRequests();
@@ -78,6 +56,17 @@ public class Elevator implements Runnable {
                 System.out.println(color + this.elevatorNumber + " is Waiting for a floor call..");
                 calledFloors.wait();
             }
+            // sort passenger requests
+            Collections.sort(this.requestedFloorsUp);
+            Collections.sort(this.requestedFloorsDown);
+
+            /*for (FloorCall call : upRequests) {
+                System.out.println(color + this.elevatorNumber + " cont sys uprequests " + call.getStartFloor() + " " + call.getDestinationFloor());
+            }
+            for (FloorCall call : downRequests) {
+                System.out.println(color + this.elevatorNumber + " cont sys downrequests " + call.getStartFloor() + " " + call.getDestinationFloor());
+            }*/
+
             System.out.println(color + this.elevatorNumber + " pressed up buttons " + this.requestedFloorsUp);
             System.out.println(color + this.elevatorNumber + " pressed down buttons " + this.requestedFloorsDown);
 
@@ -279,15 +268,6 @@ public class Elevator implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        int floorButtonUp = 11;
-        //int floorButtonDown = 1;
-
-        // todo - unpress call request button on destination floor
-        // passengers choose floor to go up or down
-        //pressFloorButton(floorButtonUp);
-        //pressFloorButton(floorButtonDown);
-
     }
 
     public boolean move(int destinationFloor) {

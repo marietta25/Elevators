@@ -1,5 +1,7 @@
 package com.testreel.elevators;
 
+import java.util.Comparator;
+
 public class FloorCall {
 
     private int startFloor;
@@ -31,4 +33,14 @@ public class FloorCall {
     public void setStartFloor(int startFloor) {
         this.startFloor = startFloor;
     }
+
+    public static Comparator<FloorCall> FloorCallSort = new Comparator<FloorCall>() {
+        @Override
+        public int compare(FloorCall o1, FloorCall o2) {
+            int startFloor1 = o1.getStartFloor();
+            int startFloor2 = o2.getStartFloor();
+
+            return startFloor1 - startFloor2;
+        }
+    };
 }

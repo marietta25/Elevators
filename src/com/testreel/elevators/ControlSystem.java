@@ -1,6 +1,7 @@
 package com.testreel.elevators;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -82,14 +83,14 @@ public class ControlSystem {
     }
 
     public boolean addFloorCall(int startFloor, int destinationFloor, int direction) {
-        // todo - sort floor calls on addition
         if (direction == 1) {
             // request to go up
             synchronized (this.upRequests) {
 
                 this.upRequests.add(new FloorCall(startFloor, destinationFloor, direction));
+                Collections.sort(this.upRequests, FloorCall.FloorCallSort);
                 this.upRequests.notifyAll();
-                System.out.println("Added floor call from " + startFloor + " to list");
+                System.out.println("Added floor call from " + startFloor + " to uprequest list");
                 return true;
             }
         } else if (direction == 0) {
@@ -97,8 +98,9 @@ public class ControlSystem {
             synchronized (this.downRequests) {
 
                 this.downRequests.add(new FloorCall(startFloor, destinationFloor, direction));
+                Collections.sort(this.downRequests, FloorCall.FloorCallSort);
                 this.downRequests.notifyAll();
-                System.out.println("Added floor call from " + startFloor + " to list");
+                System.out.println("Added floor call from " + startFloor + " to downrequests list");
                 return true;
             }
         } else {
